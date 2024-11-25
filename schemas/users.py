@@ -22,7 +22,7 @@ class UserBase(BaseModel):
 
 
 class TokenBase(BaseModel):
-    token: UUID4 = Field(..., alias='access_token')
+    token: str
     expires: datetime
     token_type: Optional[str] = 'bearer'
     class Config:

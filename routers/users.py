@@ -9,7 +9,7 @@ from utils.users import new_user, get_user_by_email
 router = APIRouter()
 
 
-@router.post('/sign-up', response_model=users.User)
+@router.post('/sign-up')
 async def create_user(user: users.UserCreate):
     db_user = await get_user_by_email(email=user.email)
     if db_user:

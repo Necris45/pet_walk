@@ -1,8 +1,9 @@
 import hashlib
 from datetime import datetime, timedelta
 from sqlalchemy import and_
-
-import models.users
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from models.users import *
 from schemas.users import UserCreate
 
 
@@ -20,12 +21,16 @@ def validate_password(password: str, hashed_password: str):
 
 async def new_user(user: UserCreate):
     """Create new user."""
-    user = models.users.User(name=user.name,
-                             email=user.email,
-                             hashed_password=hash_password(user.password, user.name),
-                             room_number=user.room_number,
-                             phone_number=user.phone_number)
-    await models.users.create_user(user)
+    token = hash_password(user.password, user.name)
+    new_user = User(name=user.name,
+                    email=user.email,
+                    hashed_password=token,
+                    room_number=user.room_number,
+                    phone_number=user.phone_number)
+    session.add(new_user)
+    user_result = await session.
+    token = await create_user_token(user_result.id, token)
+    return {**user.dict(), "id": user_result.id, "is_active": True, "token": token}
 
 
 async def get_user_by_email(email):
@@ -36,11 +41,8 @@ async def get_user_by_token(token: str):
     await models.users.get_user_by_token(token)
 
 
-async def create_user_token(user_id: int):
-    """Create token for user with user_id."""
-    query = (
-        tokens_table.insert()
-        .values(expires=datetime.now() + timedelta(weeks=2), user_id=user_id)
-        .returning(tokens_table.c.token, tokens_table.c.expires)
-    )
-    return await database.fetch_one(query)
+async def create_user_token(user_id: int, token: str):
+    token = models.users.Token(token=token,
+                               expires=datetime.now() + timedelta(weeks=2),
+                               user_id=user_id)
+    await models.users.create_token(token)
