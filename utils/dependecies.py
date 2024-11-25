@@ -5,8 +5,8 @@ from fastapi.security import OAuth2PasswordBearer
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth')
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    user = await users_utils.get_user_by_token(token)
+async def get_current_user(token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)):
+    user = await users_utils.get_user_by_token(session, token)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -1,8 +1,6 @@
 import sqlalchemy
-# from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID
 from db import Base
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column, Session
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey
 
 
@@ -24,7 +22,8 @@ class Token(Base):
     __tablename__ = 'tokens'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    token = Column(String, nullable=False, index=True)
+    token = Column(UUID(as_uuid=False), server_default=sqlalchemy.text('uuid_generate_v4()'),
+                   unique=True, nullable=False, index=True)
     expires = Column(DateTime)
     user_id = Column(ForeignKey("users.id"))
 
