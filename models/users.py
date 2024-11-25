@@ -26,4 +26,4 @@ class Token(Base):
     token = Column(UUID(as_uuid=False), server_default=sqlalchemy.text('uuid_generate_v4()'),
                    unique=True, nullable=False, index=True)
     expires = Column(DateTime)
-    user_id = Column(ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey(User.id))

@@ -3,10 +3,12 @@ import random
 import string
 from datetime import datetime, timedelta
 from sqlalchemy import and_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.users import User, Token
 from schemas.users import UserCreate
 from db import get_session, engine
+from utils.exceptions import DuplicatedEntryError
 
 
 def get_random_string(length=12):
@@ -36,16 +38,23 @@ async def get_user_by_email(session: AsyncSession, email: str):
 
 async def get_user_by_token(session: AsyncSession, token: str):
     """Return user info by token."""
-    result = await session.execute(select(User).join(Token.user_id).select().where(
-            Token.token == token,
-            Token.expires > datetime.now()))
-    return result.scalars().first()
+    result = await session.execute(select(Token).where(Token.token == token,
+                                                       Token.expires > datetime.now()))
+    order = result.scalars().first()
+    user = await session.execute(select(User).where(User.id == order.user_id))
+    return user.scalars().first()
 
 
-async def create_user_token(session: AsyncSession, user_id: int):
+async def create_user_token(session: AsyncSession, user_id: int, need_commit=False):
     new_token = Token(expires=datetime.now() + timedelta(weeks=2), user_id=user_id)
     session.add(new_token)
     result = await session.execute(select(Token).where(Token.user_id == user_id))
+    if need_commit:
+        try:
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            raise DuplicatedEntryError("this user already exist")
     return result.scalars().first()
 
 
@@ -58,5 +67,10 @@ async def new_user(session: AsyncSession, user: UserCreate):
     session.add(new_user)
     result = await get_user_by_email(session, user.email)
     token = await create_user_token(session, result.id)
-    token_dict = {"token": token.token, "expires": token.expires}
-    return {**user.dict(), "id": result.id, "is_active": True, "token": token_dict}
+    try:
+        await session.commit()
+        token_dict = {"token": token.token, "expires": token.expires}
+        return {**user.dict(), "id": result.id, "is_active": True, "token": token_dict}
+    except IntegrityError:
+        await session.rollback()
+        raise DuplicatedEntryError("this user already exist")
