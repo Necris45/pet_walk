@@ -1,10 +1,13 @@
 import hashlib
 import random
 import string
+import json
 from datetime import datetime, timedelta
 from sqlalchemy import and_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.testing import is_instance_of
+
 from models.users import User, Token
 from schemas.users import UserCreate
 from db import get_session, engine
@@ -74,3 +77,47 @@ async def new_user(session: AsyncSession, user: UserCreate):
     except IntegrityError:
         await session.rollback()
         raise DuplicatedEntryError("this user already exist")
+
+
+async def add_pet_to_user(session: AsyncSession, new_pet, user):
+    pet = {}
+    pet['name'] = new_pet.name
+    pet['species'] = new_pet.species
+    pets = user.pets
+    if pets:
+        if pet in pets:
+            raise DuplicatedEntryError("this pet already exist")
+        if isinstance(pets, list) and len(pets) <= 5:
+            pets.append(pet)
+        elif isinstance(pets, list) and len(pets) >= 5:
+            raise DuplicatedEntryError("you added too many pets")
+        else:
+            pets = []
+            pets.append(pet)
+            pets = json.dumps(pets)
+    user.pets = pets
+    try:
+        await session.commit()
+        return new_pet
+    except:
+        await session.rollback()
+        raise DuplicatedEntryError("something going wrong, try again later")
+
+
+async def remove_pet_from_user(session: AsyncSession, new_pet, user):
+    pet = {}
+    pet['name'] = new_pet.name
+    pet['species'] = new_pet.species
+    pets = user.pets
+    if pets:
+        if pet in pets:
+            pets = [el for el in pets if el != pet]
+        else:
+            raise DuplicatedEntryError("you have not this pets")
+    user.pets = pets
+    try:
+        await session.commit()
+        return new_pet
+    except:
+        await session.rollback()
+        raise DuplicatedEntryError("something going wrong, try again later")

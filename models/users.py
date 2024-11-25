@@ -1,7 +1,7 @@
 import sqlalchemy
 from sqlalchemy.dialects.postgresql import UUID
 from db import Base
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, JSON
 
 
 class User(Base):
@@ -16,6 +16,7 @@ class User(Base):
     phone_number = Column(String(15))
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
+    pets = Column(String, default='[]')
 
 
 class Token(Base):

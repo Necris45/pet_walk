@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field, UUID4, validator
+from pydantic import BaseModel, EmailStr, Field, UUID4, validator, json
 
 
 class UserCreate(BaseModel):
@@ -20,6 +20,10 @@ class UserBase(BaseModel):
     room_number: int
     phone_number: str
 
+
+class PetsBase(BaseModel):
+    name: str
+    species: str
 
 class TokenBase(BaseModel):
     token: UUID4

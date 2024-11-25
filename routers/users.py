@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db import get_session
 from schemas import users
 from utils.dependecies import get_current_user
-from utils.users import new_user, get_user_by_email, validate_password, create_user_token
+from utils.users import (new_user, get_user_by_email, validate_password, create_user_token,
+                         add_pet_to_user, remove_pet_from_user)
 
 router = APIRouter()
 
@@ -33,3 +34,17 @@ async def auth(format_data: OAuth2PasswordRequestForm = Depends(), session: Asyn
 @router.get('/users/me', response_model=users.UserBase)
 async def read_user(current_user: users.User = Depends(get_current_user)):
     return current_user
+
+
+@router.post('/users/add_pet', response_model=users.PetsBase)
+async def add_pets(pets: users.PetsBase, current_user: users.User = Depends(get_current_user),
+                   session: AsyncSession = Depends(get_session)):
+    if current_user.is_active:
+        return await add_pet_to_user(session, pets, current_user)
+
+
+@router.post('/users/remove_pet', response_model=users.PetsBase)
+async def remove_pets(pets: users.PetsBase, current_user: users.User = Depends(get_current_user),
+                   session: AsyncSession = Depends(get_session)):
+    if current_user.is_active:
+        return await remove_pet_from_user(session, pets, current_user)
