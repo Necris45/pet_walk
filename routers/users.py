@@ -44,10 +44,10 @@ async def add_pets(pets: users.PetsBase, current_user: users.User = Depends(get_
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='User deactivated')
 
 
-@router.post('/users/remove_pet', response_model=users.PetsBase)
-async def remove_pets(pets: users.PetsBase, current_user: users.User = Depends(get_current_user),
+@router.post('/users/remove_pet')
+async def remove_pets(current_user: users.User = Depends(get_current_user),
                    session: AsyncSession = Depends(get_session)):
     if current_user.is_active:
-        return await remove_pet_from_user(session, pets, current_user)
+        return await remove_pet_from_user(session, current_user)
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='User deactivated')

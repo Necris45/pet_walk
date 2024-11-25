@@ -1,16 +1,15 @@
 import hashlib
 import random
 import string
-import json
 from datetime import datetime, timedelta
-from sqlalchemy import and_, select
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.testing import is_instance_of
+
 
 from models.users import User, Token
 from schemas.users import UserCreate
-from db import get_session, engine
+
 from utils.exceptions import DuplicatedEntryError
 
 
@@ -44,8 +43,11 @@ async def get_user_by_token(session: AsyncSession, token: str):
     result = await session.execute(select(Token).where(Token.token == token,
                                                        Token.expires > datetime.now()))
     order = result.scalars().first()
-    user = await session.execute(select(User).where(User.id == order.user_id))
-    return user.scalars().first()
+    if order:
+        user = await session.execute(select(User).where(User.id == order.user_id))
+        return user.scalars().first()
+    else:
+        raise DuplicatedEntryError("this user not exist")
 
 
 async def create_user_token(session: AsyncSession, user_id: int, need_commit=False):
@@ -80,22 +82,12 @@ async def new_user(session: AsyncSession, user: UserCreate):
 
 
 async def add_pet_to_user(session: AsyncSession, new_pet, user):
-    pet = {}
-    pet['name'] = new_pet.name
-    pet['species'] = new_pet.species
+    pet = {'name': new_pet.name, 'species': new_pet.species}
     pets = user.pets
-    if pets:
-        if pet in pets:
-            raise DuplicatedEntryError("this pet already exist")
-        if isinstance(pets, list) and len(pets) <= 5:
-            pets.append(pet)
-        elif isinstance(pets, list) and len(pets) >= 5:
-            raise DuplicatedEntryError("you added too many pets")
-        else:
-            pets = []
-            pets.append(pet)
-            pets = json.dumps(pets)
-    user.pets = pets
+    if pets != []:
+        raise DuplicatedEntryError("you can not add additional pet yet")
+    else:
+        user.pets = f'[{pet}]'
     try:
         await session.commit()
         return new_pet
@@ -104,20 +96,25 @@ async def add_pet_to_user(session: AsyncSession, new_pet, user):
         raise DuplicatedEntryError("something going wrong, try again later")
 
 
-async def remove_pet_from_user(session: AsyncSession, new_pet, user):
-    pet = {}
-    pet['name'] = new_pet.name
-    pet['species'] = new_pet.species
+async def remove_pet_from_user(session: AsyncSession, user):
     pets = user.pets
-    if pets:
-        if pet in pets:
-            pets = [el for el in pets if el != pet]
-        else:
-            raise DuplicatedEntryError("you have not this pets")
-    user.pets = pets
+    if len(pets) > 0:
+        user.pets = []
+    else:
+        raise DuplicatedEntryError("you have not pets")
     try:
         await session.commit()
-        return new_pet
     except:
         await session.rollback()
         raise DuplicatedEntryError("something going wrong, try again later")
+
+
+def check_pet(pet_name: str, pet_species: str, user):
+    pet = {'name': pet_name, 'species': pet_species}
+    pets = user.pets
+    if pets == f'[{pet}]':
+        return pet
+    elif pets != f'[{pet}]':
+        raise DuplicatedEntryError("you not added pet yet")
+    else:
+        raise DuplicatedEntryError("this pet not added")

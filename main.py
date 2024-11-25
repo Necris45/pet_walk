@@ -1,16 +1,9 @@
 import asyncio
 import typer
 from fastapi import FastAPI
-from datetime import datetime
-from typing import Optional
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, EmailStr, validator
-from sqlalchemy.exc import IntegrityError
-from utils.exceptions import DuplicatedEntryError
+
 from db import init_models
-from db import get_session
-from routers import ping, users, appointments
+from routers import ping, users, appointments, orders
 
 app = FastAPI()
 cli = typer.Typer()
@@ -30,6 +23,7 @@ async def root():
 app.include_router(ping.router)
 app.include_router(users.router)
 app.include_router(appointments.router)
+app.include_router(orders.router)
 
 if __name__ == "__main__":
     cli()

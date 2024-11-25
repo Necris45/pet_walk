@@ -1,8 +1,7 @@
-import sqlalchemy
-from sqlalchemy.dialects.postgresql import UUID
 from db import Base
-from sqlalchemy import Column, String, Integer, Boolean, Date, Time, ForeignKey, JSON
+from sqlalchemy import Column, Integer, Boolean, Date, Time, ForeignKey
 from models.users import User
+
 
 class Appointment(Base):
 

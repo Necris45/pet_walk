@@ -4,10 +4,10 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
 import asyncpg
 
-DB_USER = 'necris45'
-DB_PASSWORD = 'Bartuk45!'
-DB_HOST = 'localhost'
-DB_NAME = 'pet_walking'
+DB_USER = ''
+DB_PASSWORD = ''
+DB_HOST = ''
+DB_NAME = ''
 DATABASE_URL = f'postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:5432/{DB_NAME}'
 
 Base = declarative_base()

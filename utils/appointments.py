@@ -1,17 +1,8 @@
-import hashlib
-import random
-import string
-import json
 from datetime import datetime, timedelta
-from sqlalchemy import and_, select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.testing import is_instance_of
 
-from models.users import User, Token
 from models.appointments import Appointment
-from schemas.users import UserCreate
-from db import get_session, engine
 from utils.exceptions import DuplicatedEntryError
 
 
@@ -72,3 +63,24 @@ async def slots_on_date(session: AsyncSession, date: str):
                                           Appointment.date == datetime.strptime(date, "%Y-%m-%d")))
     find_time = result.scalars().all()
     return find_time
+
+
+async def change_appointment_status(session: AsyncSession, date: str, time: str, staff_id: int):
+    date_time = datetime.strptime(f'{date} {time}', "%Y-%m-%d %H:%M")
+    result = await session.execute(select(Appointment)
+                                   .where(Appointment.is_free == True,
+                                          Appointment.date == date_time.date(),
+                                          Appointment.time == date_time.time(),
+                                          Appointment.staff_id == staff_id))
+    blocked_slot = result.scalars().first()
+
+    if blocked_slot is not None:
+        blocked_slot.is_free = False
+        try:
+            await session.commit()
+            return blocked_slot
+        except:
+            await session.rollback()
+            raise DuplicatedEntryError("somebody was faster when you")
+    else:
+        raise DuplicatedEntryError("somebody was faster when you")
