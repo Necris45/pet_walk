@@ -5,6 +5,7 @@ from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey
 
 
 class User(Base):
+
     __tablename__ = "users"
 
     id = Column(Integer, autoincrement=True, primary_key=True, index=True)
@@ -26,4 +27,3 @@ class Token(Base):
                    unique=True, nullable=False, index=True)
     expires = Column(DateTime)
     user_id = Column(ForeignKey("users.id"))
-

@@ -6,8 +6,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.users import User, Token
 from schemas.users import UserCreate
-from db import get_session
-
+from db import get_session, engine
 
 
 def get_random_string(length=12):
@@ -44,9 +43,10 @@ async def get_user_by_token(session: AsyncSession, token: str):
 
 
 async def create_user_token(session: AsyncSession, user_id: int):
-    new_token = Token(expires=datetime.now() + timedelta(weeks=2), user_id=user_id).returning(Token.token, Token.expires)
+    new_token = Token(expires=datetime.now() + timedelta(weeks=2), user_id=user_id)
     session.add(new_token)
-    return new_token
+    result = await session.execute(select(Token).where(Token.user_id == user_id))
+    return result.scalars().first()
 
 
 async def new_user(session: AsyncSession, user: UserCreate):
@@ -58,5 +58,5 @@ async def new_user(session: AsyncSession, user: UserCreate):
     session.add(new_user)
     result = await get_user_by_email(session, user.email)
     token = await create_user_token(session, result.id)
-    token_dict = {"token": token["token"], "expires": token["expires"]}
+    token_dict = {"token": token.token, "expires": token.expires}
     return {**user.dict(), "id": result.id, "is_active": True, "token": token_dict}

@@ -9,7 +9,7 @@ class UserCreate(BaseModel):
     name: str
     password: str
     room_number: int
-    phone_number: int
+    phone_number: str
 
 
 class UserBase(BaseModel):
@@ -18,7 +18,7 @@ class UserBase(BaseModel):
     email: EmailStr
     name: str
     room_number: int
-    phone_number: int
+    phone_number: str
 
 
 class TokenBase(BaseModel):
