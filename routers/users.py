@@ -15,7 +15,6 @@ router = APIRouter()
 @router.post('/sign-up')
 async def create_user(user: users.UserCreate, session: AsyncSession = Depends(get_session)):
     db_user = await get_user_by_email(session, email=user.email)
-    print(db_user)
     if db_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Email already registered.')
     return await new_user(session, user=user)
@@ -41,6 +40,8 @@ async def add_pets(pets: users.PetsBase, current_user: users.User = Depends(get_
                    session: AsyncSession = Depends(get_session)):
     if current_user.is_active:
         return await add_pet_to_user(session, pets, current_user)
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='User deactivated')
 
 
 @router.post('/users/remove_pet', response_model=users.PetsBase)
@@ -48,3 +49,5 @@ async def remove_pets(pets: users.PetsBase, current_user: users.User = Depends(g
                    session: AsyncSession = Depends(get_session)):
     if current_user.is_active:
         return await remove_pet_from_user(session, pets, current_user)
+    else:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='User deactivated')

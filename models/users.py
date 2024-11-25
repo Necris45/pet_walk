@@ -16,7 +16,7 @@ class User(Base):
     phone_number = Column(String(15))
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
-    pets = Column(String, default='[]')
+    pets = Column(JSON, default=list)
 
 
 class Token(Base):

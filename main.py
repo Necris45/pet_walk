@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from utils.exceptions import DuplicatedEntryError
 from db import init_models
 from db import get_session
-from routers import ping, users
+from routers import ping, users, appointments
 
 app = FastAPI()
 cli = typer.Typer()
@@ -29,6 +29,7 @@ async def root():
 
 app.include_router(ping.router)
 app.include_router(users.router)
+app.include_router(appointments.router)
 
 if __name__ == "__main__":
     cli()
